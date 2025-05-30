@@ -280,45 +280,75 @@
   }
 
   /* XML */
-  async function jsonToXML(obj) {
-    const fxp = await lazyLoad(
-      "https://cdn.jsdelivr.net/npm/fast-xml-parser@4/dist/fast-xml-parser.min.js",
-      "fxp"
-    );
-    const parser = new fxp.XMLBuilder({
-      ignoreAttributes: false,
-      format: true,
-      indentBy: "  ",
-    });
-    return parser.build(obj);
+  /* ---------- XML helpers (fallback, no external lib) ---------- */
+  function buildXML(node, tagName = "root", indent = "") {
+    const pad = "  "; // two-space indent
+    if (typeof node !== "object" || node === null) {
+      return `${indent}<${tagName}>${String(node)}</${tagName}>\n`;
+    }
+
+    if (Array.isArray(node)) {
+      return node
+        .map((n) => buildXML(n, tagName, indent)) // repeat same tag
+        .join("");
+    }
+
+    const inner = Object.entries(node)
+      .map(([k, v]) => buildXML(v, k, indent + pad))
+      .join("");
+    return `${indent}<${tagName}>\n${inner}${indent}</${tagName}>\n`;
   }
-  async function xmlToJSON(text) {
-    const fxp = await lazyLoad(
-      "https://cdn.jsdelivr.net/npm/fast-xml-parser@4/dist/fast-xml-parser.min.js",
-      "fxp"
-    );
-    const parser = new fxp.XMLParser({
-      ignoreAttributes: false,
-      trimValues: true,
+
+  function jsonToXML(obj) {
+    // choose the top-level tag name based on root key or fallback to <root>
+    if (typeof obj === "object" && !Array.isArray(obj) && obj !== null) {
+      const [rootKey] = Object.keys(obj);
+      if (rootKey) {
+        return buildXML(obj[rootKey], rootKey).trim();
+      }
+    }
+    return buildXML(obj).trim();
+  }
+
+  function xmlNodeToJSON(node) {
+    // Element → object; Text → value
+    if (node.nodeType === 3) return node.nodeValue.trim(); // TEXT_NODE
+
+    const obj = {};
+    node.childNodes.forEach((child) => {
+      const val = xmlNodeToJSON(child);
+      if (val === "") return; // ignore empty text
+      const tag = child.nodeName;
+      if (obj[tag]) {
+        // make it an array if repeated
+        obj[tag] = Array.isArray(obj[tag])
+          ? [...obj[tag], val]
+          : [obj[tag], val];
+      } else {
+        obj[tag] = val;
+      }
     });
-    return parser.parse(text);
+    return obj;
+  }
+
+  function xmlToJSON(xmlStr) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xmlStr, "application/xml");
+    const root = doc.documentElement;
+    return { [root.nodeName]: xmlNodeToJSON(root) };
   }
 
   /* CSV */
   async function jsonToCSV(obj) {
-    const papa = await lazyLoad(
-      "https://cdn.jsdelivr.net/npm/papaparse@5.4.3/papaparse.min.js",
-      "Papa"
-    );
+    const papa = window.Papa;
+
     return papa.unparse(obj);
   }
-  async function csvToJSON(text) {
-    const papa = await lazyLoad(
-      "https://cdn.jsdelivr.net/npm/papaparse@5.4.3/papaparse.min.js",
-      "Papa"
-    );
-    const res = papa.parse(text, { header: true });
-    return res.data;
+  function jsonToCSV(obj) {
+    const papa = window.Papa;
+
+    const data = Array.isArray(obj) ? obj : [obj];
+    return papa.unparse(data);
   }
 
   /* ─────────────────────  key‑case + replacements  ─────────────────── */
@@ -412,7 +442,7 @@
         break;
       }
       case "csv": {
-        result = await jsonToCSV(data);
+        result = jsonToCSV(data);
         break;
       }
       case "emmet": {
