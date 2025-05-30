@@ -1,131 +1,163 @@
 <!DOCTYPE html>
 <html lang="bg">
-   <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Format Convertor</title>
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-      <link rel="stylesheet" href="style.css">
-   </head>
-   <body>
-      <div class="app-container">
-         <header class="app-header">
-            <div class="header-content">
-               <div class="logo">
-                  <i class="fas fa-exchange-alt logo-icon"></i>
-                  <span>Format Convertor</span>
-               </div>
-            </div>
-         </header>
-         <main class="main-content">
-            <div class="toolbar">
-               <h1 class="toolbar-title">Инструмент за трансформация на данни</h1>
-               <div class="toolbar-actions">
-                  <button class="btn btn-outline">
-                  <i class="fas fa-history"></i> История
-                  </button>
-                  <button class="btn btn-outline">
-                  <i class="fas fa-bookmark"></i> Шаблони
-                  </button>
-               </div>
-            </div>
-            <div class="tabs">
-               <div class="tab active">Трансформатор</div>
-               <div class="tab">История</div>
-            </div>
-            <div class="tab-content active" id="transform-tab">
-               <div class="editor-panel">
-                  <div class="editor-container">
-                     <div class="editor-header">
-                        <div class="editor-title">
-                           <i class="fas fa-code"></i> Вход
-                        </div>
-                     </div>
-                     <div class="editor-body">
-                        <textarea id="input-field" class="code-editor" placeholder="Въведете входните данни тук...">{
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Format Convertor</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <header class="app-header">
+        <div class="header-content">
+          <div class="logo">
+            <i class="fas fa-exchange-alt logo-icon"></i>
+            <span>Format Convertor</span>
+          </div>
+        </div>
+      </header>
+      <main class="main-content">
+        <div class="toolbar">
+          <h1 class="toolbar-title">Инструмент за трансформация на данни</h1>
+          <div class="toolbar-actions">
+            <button class="btn btn-outline">
+              <i class="fas fa-history"></i> История
+            </button>
+            <button class="btn btn-outline">
+              <i class="fas fa-bookmark"></i> Шаблони
+            </button>
+          </div>
+        </div>
+        <div class="tabs">
+          <div class="tab active">Трансформатор</div>
+          <div class="tab">История</div>
+        </div>
+        <div class="tab-content active" id="transform-tab">
+          <div class="editor-panel">
+            <div class="editor-container">
+              <div class="editor-header">
+                <div class="editor-title"><i class="fas fa-code"></i> Вход</div>
+              </div>
+              <div class="editor-body">
+                <textarea
+                  id="input-field"
+                  class="code-editor"
+                  placeholder="Въведете входните данни тук..."
+                >
+{
                         "name": "John Doe",
                         "age": 30,
                         "address": {
                         "street": "123 Main St",
                         "city": "Anytown"
                         }
-                        }</textarea>
-                     </div>
-                  </div>
-                  <div class="editor-container">
-                     <div class="editor-header">
-                        <div class="editor-title">
-                           <i class="fas fa-file-code"></i> Изход
-                        </div>
-                     </div>
-                     <div class="editor-body">
-                        <textarea id="output-field" class="code-editor" readonly placeholder="Трансформираният изход ще се появи тук..."></textarea>
-                     </div>
-                  </div>
-               </div>
-               <div class="settings-panel">
-                  <div class="settings-header">
-                     <i class="fas fa-sliders-h"></i> Настройки за трансформация
-                  </div>
-                  <div class="settings-body">
-                     <div class="form-row">
-                        <div class="form-group">
-                           <label class="radio-label">
-                           <input type="radio" name="format-mode" value="dropdown" checked> Изберете формати от падащо меню
-                           </label>
-                           <label class="radio-label">
-                           <input type="radio" name="format-mode" value="manual"> Ръчно въвеждане на формати
-                           </label>
-                        </div>
-                     </div>
-                     <div id="dropdown-formats-container">
-                        <div class="form-row">
-                           <div class="form-group">
-                              <label class="form-label">Входен формат</label>
-                              <select id="input-format-select" class="form-control">
-                                 <option>JSON</option>
-                                 <option>YAML</option>
-                                 <option>XML</option>
-                                 <option>CSV</option>
-                                 <option>Emmet</option>
-                              </select>
-                           </div>
-                           <div class="form-group">
-                              <label class="form-label">Изходен формат</label>
-                              <select id="output-format-select" class="form-control">
-                                 <option>YAML</option>
-                                 <option>JSON</option>
-                                 <option>XML</option>
-                                 <option>CSV</option>
-                                 <option>Emmet</option>
-                              </select>
-                           </div>
-                        </div>
-                     </div>
-                     <div id="manual-format-container" class="form-group" style="display: none;">
-                        <label class="form-label">Ръчно въвеждане на настройки (key=value pairs)</label>
-                        <textarea id="manual-format-field" class="form-control" rows="2" placeholder="inputformat=json&#10;outputformat=yaml"></textarea>
-                     </div>
-                  </div>
-               </div>
-               <div class="action-bar">
-                  <button class="btn btn-outline">
-                  <i class="fas fa-redo"></i> Нулиране
-                  </button>
-                  <button id="transform-btn" class="btn btn-primary btn-lg">
-                  <i class="fas fa-bolt"></i> Трансформирай
-                  </button>
-               </div>
+                        }</textarea
+                >
+              </div>
             </div>
-            <div class="tab-content" id="history-tab">
-               <div id="history-container" class="history-panel">
-               </div>
+            <div class="editor-container">
+              <div class="editor-header">
+                <div class="editor-title">
+                  <i class="fas fa-file-code"></i> Изход
+                </div>
+              </div>
+              <div class="editor-body">
+                <textarea
+                  id="output-field"
+                  class="code-editor"
+                  readonly
+                  placeholder="Трансформираният изход ще се появи тук..."
+                ></textarea>
+              </div>
             </div>
-         </main>
-         <footer class="app-footer">
-         </footer>
-      </div>
-      <script src="script.js"></script>
-   </body>
+          </div>
+          <div class="settings-panel">
+            <div class="settings-header">
+              <i class="fas fa-sliders-h"></i> Настройки за трансформация
+            </div>
+            <div class="settings-body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="radio-label">
+                    <input
+                      type="radio"
+                      name="format-mode"
+                      value="dropdown"
+                      checked
+                    />
+                    Изберете формати от падащо меню
+                  </label>
+                  <label class="radio-label">
+                    <input type="radio" name="format-mode" value="manual" />
+                    Ръчно въвеждане на формати
+                  </label>
+                </div>
+              </div>
+              <div id="dropdown-formats-container">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Входен формат</label>
+                    <select id="input-format-select" class="form-control">
+                      <option>JSON</option>
+                      <option>YAML</option>
+                      <option>XML</option>
+                      <option>CSV</option>
+                      <option>Emmet</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Изходен формат</label>
+                    <select id="output-format-select" class="form-control">
+                      <option>YAML</option>
+                      <option>JSON</option>
+                      <option>XML</option>
+                      <option>CSV</option>
+                      <option>Emmet</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div
+                id="manual-format-container"
+                class="form-group"
+                style="display: none"
+              >
+                <label class="form-label"
+                  >Ръчно въвеждане на настройки (key=value pairs)</label
+                >
+                <textarea
+                  id="manual-format-field"
+                  class="form-control"
+                  rows="2"
+                  placeholder="inputformat=json&#10;outputformat=yaml"
+                ></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="action-bar">
+            <button class="btn btn-outline">
+              <i class="fas fa-redo"></i> Нулиране
+            </button>
+            <button id="transform-btn" class="btn btn-primary btn-lg">
+              <i class="fas fa-bolt"></i> Трансформирай
+            </button>
+          </div>
+        </div>
+        <div class="tab-content" id="history-tab">
+          <div id="history-container" class="history-panel"></div>
+        </div>
+      </main>
+      <footer class="app-footer"></footer>
+    </div>
+    <script src="convert.js"></script>
+    <script src="script.js"></script>
+  </body>
 </html>
