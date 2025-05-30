@@ -338,17 +338,35 @@
     return { [root.nodeName]: xmlNodeToJSON(root) };
   }
 
-  /* CSV */
-  async function jsonToCSV(obj) {
-    const papa = window.Papa;
-
-    return papa.unparse(obj);
+  function flattenObject(obj, prefix = "") {
+    return Object.entries(obj).reduce((acc, [key, val]) => {
+      const newKey = prefix ? `${prefix}.${key}` : key;
+      if (typeof val === "object" && val !== null && !Array.isArray(val)) {
+        Object.assign(acc, flattenObject(val, newKey));
+      } else {
+        acc[newKey] = val;
+      }
+      return acc;
+    }, {});
   }
-  function jsonToCSV(obj) {
-    const papa = window.Papa;
 
-    const data = Array.isArray(obj) ? obj : [obj];
-    return papa.unparse(data);
+  /* CSV */
+  function jsonToCSV(data) {
+    const arr = Array.isArray(data) ? data : [data];
+    const flat = arr.map(flattenObject);
+    const cols = Array.from(new Set(flat.flatMap((obj) => Object.keys(obj))));
+    const header = cols.join(",");
+    const rows = flat.map((row) =>
+      cols
+        .map((c) => {
+          const cell = row[c] ?? "";
+          return /[,"]/g.test(cell)
+            ? `"${String(cell).replace(/"/g, '""')}"`
+            : cell;
+        })
+        .join(",")
+    );
+    return header + "\n" + rows.join("\n");
   }
 
   /* ─────────────────────  key‑case + replacements  ─────────────────── */
