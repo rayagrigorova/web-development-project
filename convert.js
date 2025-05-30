@@ -300,18 +300,10 @@
   }
 
   function jsonToXML(obj) {
-    // choose the top-level tag name based on root key or fallback to <root>
-    if (typeof obj === "object" && !Array.isArray(obj) && obj !== null) {
-      const [rootKey] = Object.keys(obj);
-      if (rootKey) {
-        return buildXML(obj[rootKey], rootKey).trim();
-      }
-    }
-    return buildXML(obj).trim();
+    return buildXML(obj, "root").trim();
   }
 
   function xmlNodeToJSON(node) {
-    // Element → object; Text → value
     if (node.nodeType === 3) return node.nodeValue.trim(); // TEXT_NODE
 
     const obj = {};
@@ -456,7 +448,7 @@
         break;
       }
       case "xml": {
-        result = await jsonToXML(data);
+        result = jsonToXML(data);
         break;
       }
       case "csv": {
