@@ -110,7 +110,6 @@
   function jsonToEmmet(json) {
     function walk(node) {
       if (Array.isArray(node)) {
-        // assume repeated identical element definitions
         if (node.length === 0) return "";
         const first = node[0];
         const repeated = walk(first);
@@ -119,12 +118,16 @@
       if (isObject(node)) {
         return Object.entries(node)
           .map(([k, v]) => {
-            const inner = walk(v);
-            return inner ? `${k}>${inner}` : k;
+            if (isObject(v) || Array.isArray(v)) {
+              const nested = walk(v);
+              const needsGroup = nested.includes("+");
+              return `${k}>${needsGroup ? `(${nested})` : nested}`;
+            } else {
+              return `${k}{${v}}`;
+            }
           })
           .join("+");
       }
-      // primitive → treat as text node
       return `{${String(node)}}`;
     }
 
@@ -172,33 +175,68 @@
     }
 
     function parseTerm() {
+      // Group term: starts with '('
+      if (peek() === "(") {
+        next(); // consume '('
+        const grp = parseNode(); // parse full inner expression
+        if (peek() !== ")") throw Error("Expected ')'");
+        next(); // consume ')'
+        return { __group: grp }; // return wrapped group
+      }
+
       const name = parseIdent();
       let value = "";
+
       if (peek() === "*") {
-        next(); // *
+        next(); // consume '*'
         const count = parseNumber();
-        value = repeat({ __tag: name }, count); // placeholder, will be fixed later
+        value = repeat({ __tag: name }, count);
       }
+
       if (peek() === "{") {
-        next();
+        next(); // consume '{'
         value = parseText();
       }
+
       if (peek() === ">") {
         next();
-        const child = parseTerm();
+        let child = parseTerm();
+
+        if (child && child.__group) child = child.__group;
         value = child;
       }
+
       return { name, value };
     }
 
     function buildObj(term) {
+      const coerce = (v) => {
+        const n = Number(v);
+        return String(n) === v ? n : v;
+      };
+
       const obj = {};
+
       if (Array.isArray(term.value)) {
         obj[term.name] = term.value.map(() => ({}));
-      } else if (isObject(term.value)) {
-        obj[term.name] = term.value;
-      } else if (term.value !== "") {
-        obj[term.name] = term.value;
+        return obj;
+      }
+
+      if (isObject(term.value)) {
+        if (
+          Object.keys(term.value).length === 2 &&
+          "name" in term.value &&
+          "value" in term.value
+        ) {
+          obj[term.name] = { [term.value.name]: term.value.value };
+        } else {
+          obj[term.name] = term.value;
+        }
+        return obj;
+      }
+
+      if (term.value !== "" && term.value !== null) {
+        obj[term.name] = coerce(term.value);
       } else {
         obj[term.name] = {};
       }
@@ -206,19 +244,52 @@
     }
 
     function parseChain() {
-      let term = parseTerm();
-      let currentObj = buildObj(term);
-      let ptr = currentObj;
-      while (peek() === ">") {
-        next();
-        term = parseTerm();
-        const childObj = buildObj(term);
-        // attach child into last level of ptr
-        const key = Object.keys(ptr)[0];
-        ptr[key] = childObj;
-        ptr = childObj;
+      const firstTerm = parseTerm();
+      const tree = firstTerm.__group ? firstTerm.__group : buildObj(firstTerm);
+
+      // Helper returns the payload object of the **current parent tag**,
+      // i.e. the place where children or siblings should be attached
+      const getParentPtr = () => {
+        let obj = tree;
+        // walk to deepest object whose only key is an object
+        while (isObject(obj) && Object.keys(obj).length === 1) {
+          const k = Object.keys(obj)[0];
+          if (isObject(obj[k])) obj = obj[k];
+          else break;
+        }
+        return obj;
+      };
+
+      while (true) {
+        if (peek() === ">") {
+          /* ---------- CHILD ---------- */
+          next(); // consume '>'
+          const child = parseTerm();
+          const childOb = child.__group ? child.__group : buildObj(child);
+
+          const parentPtr = getParentPtr();
+          Object.assign(parentPtr, childOb);
+
+          if (peek() === ">") {
+            const childKey = Object.keys(childOb)[0];
+            parentPtr[childKey] =
+              parentPtr[childKey] || childOb[childKey] || {};
+          }
+        } else if (peek() === "+") {
+          next();
+          const sibling = parseTerm();
+          const siblingOb = sibling.__group
+            ? sibling.__group
+            : buildObj(sibling);
+
+          const parentPtr = getParentPtr();
+          Object.assign(parentPtr, siblingOb);
+        } else {
+          break;
+        }
       }
-      return currentObj;
+
+      return tree;
     }
 
     function mergeJSON(a, b) {
@@ -342,6 +413,25 @@
     }, {});
   }
 
+  function unflattenObject(flat) {
+    const out = {};
+    for (const [key, val] of Object.entries(flat)) {
+      const parts = key.split(".");
+      let ptr = out;
+      parts.forEach((part, idx) => {
+        if (idx === parts.length - 1) {
+          // last part → assign value, try to coerce numbers
+          const num = Number(val);
+          ptr[part] = !Number.isNaN(num) && val.trim() !== "" ? num : val;
+        } else {
+          ptr[part] = ptr[part] || {};
+          ptr = ptr[part];
+        }
+      });
+    }
+    return out;
+  }
+
   /* CSV */
   function jsonToCSV(data) {
     const arr = Array.isArray(data) ? data : [data];
@@ -359,6 +449,21 @@
         .join(",")
     );
     return header + "\n" + rows.join("\n");
+  }
+
+  function csvToJSON(text) {
+    const [headerLine, ...lines] = text.trim().split(/\r?\n/);
+    if (!headerLine) return [];
+
+    const cols = headerLine.split(",");
+    const rows = lines.map((line) => line.split(","));
+
+    const objects = rows.map((cells) => {
+      const flat = Object.fromEntries(cols.map((c, i) => [c, cells[i] ?? ""]));
+      return unflattenObject(flat);
+    });
+
+    return objects.length === 1 ? objects[0] : objects;
   }
 
   /* ─────────────────────  key‑case + replacements  ─────────────────── */
@@ -418,7 +523,7 @@
         data = await xmlToJSON(inputStr);
         break;
       case "csv":
-        data = await csvToJSON(inputStr);
+        data = csvToJSON(inputStr);
         break;
       case "emmet":
         data = emmetToJSON(inputStr.trim());
