@@ -158,9 +158,35 @@
       </main>
       <footer class="app-footer"></footer>
     </div>
+    <!-- AUTH MODAL -->
+    <div id="auth-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2 id="auth-title">Вход</h2>
+
+        <form id="auth-form">
+          <input type="email" name="email" placeholder="E-mail" required />
+          <input
+            type="password"
+            name="password"
+            placeholder="Парола"
+            required
+            minlength="6"
+          />
+          <button class="btn btn-primary" type="submit">OK</button>
+        </form>
+
+        <p class="auth-switch">
+          <span id="auth-help">Нямате акаунт?</span>
+          <a id="auth-switch-link" href="#">Регистрация</a>
+        </p>
+
+        <p class="auth-error hidden" id="auth-error"></p>
+      </div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
     <script src="convert.js"></script>
     <script src="script.js"></script>
+    <script src="auth.js"></script>
   </body>
 </html>

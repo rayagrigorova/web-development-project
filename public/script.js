@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+window.initApp = function initApp() {
   // Tab functionality
   const tabs = document.querySelectorAll(".tab");
   const tabContents = document.querySelectorAll(".tab-content");
@@ -155,4 +155,4 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   renderHistory();
-});
+};
