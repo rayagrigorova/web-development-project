@@ -65,7 +65,8 @@ authForm.addEventListener("submit", async (e) => {
     setLoggedUser(me.email);
 
     hideAuth();
-    initApp(); // ← render the main UI
+    initApp();
+    window.renderHistory();
   } catch (err) {
     authErr.textContent = err.error || "Неизвестна грешка.";
     authErr.classList.remove("hidden");
@@ -88,6 +89,16 @@ document.getElementById("logout-btn").addEventListener("click", async () => {
   try {
     await api("logout.php");
   } catch {}
+
+  // clear editors and history
+  const inputField = document.getElementById("input-field");
+  inputField.value = SAMPLE_JSON;
+
+  document.getElementById("output-field").value = "";
+  document.getElementById("manual-format-field").value = "";
+  const hist = document.getElementById("history-container");
+  if (hist) hist.innerHTML = "";
+
   setLoggedUser("");
   showAuth();
 });

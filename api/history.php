@@ -1,6 +1,8 @@
 <?php
 require __DIR__.'/db.php';
 
+error_log(__FILE__.' '.session_id().' uid='.($_SESSION['uid']??'¬'));
+
 if (!isset($_SESSION['uid'])) {
     http_response_code(401);
     echo json_encode(['error' => 'Not logged in']);

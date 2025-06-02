@@ -1,4 +1,15 @@
+const SAMPLE_JSON = `{
+  "name": "John Doe",
+  "age": 30,
+  "address": {
+    "street": "123 Main St",
+    "city": "Anytown"
+  }
+}`;
+
 window.initApp = function initApp() {
+  if (window._appInitialized) return;
+  window._appInitialized = true;
   // Tab functionality
   const tabs = document.querySelectorAll(".tab");
   const tabContents = document.querySelectorAll(".tab-content");
@@ -70,8 +81,9 @@ window.initApp = function initApp() {
       '<i class="fas fa-spinner fa-spin"></i> Обработва се...';
     transformBtn.disabled = true;
 
+    let result, meta;
     try {
-      const { result } = await DataTransformer.convert(input, settingsString);
+      ({ result, meta } = await DataTransformer.convert(input, settingsString));
       outputField.value = result;
     } catch (err) {
       outputField.value = "⚠️ Грешка при трансформация:\n" + err.message;
@@ -80,66 +92,72 @@ window.initApp = function initApp() {
       transformBtn.disabled = false;
     }
 
-    // ---------- optional history ----------
+    // ---------- server-side history ----------
     if (settingsString.includes("savetohistory=true")) {
-      const record = {
-        input,
-        settings: settingsString,
-        output: outputField.value,
-        timestamp: new Date().toISOString(),
-      };
-      const history = JSON.parse(
-        localStorage.getItem("transformHistory") || "[]"
-      );
-      history.unshift(record);
-      localStorage.setItem("transformHistory", JSON.stringify(history));
+      await api("save_conversion.php", {
+        method: "POST",
+        body: JSON.stringify({
+          input_format: meta.inFmt,
+          output_format: meta.outFmt,
+          settings: settingsString,
+          input,
+          output: result,
+        }),
+      }).catch(() => {});
       renderHistory();
     }
   });
 
   function renderHistory() {
-    historyContainer.innerHTML = "";
-    const history = JSON.parse(
-      localStorage.getItem("transformHistory") || "[]"
-    );
+    historyContainer.innerHTML = '<div class="empty-state">Зареждане…</div>';
 
-    if (history.length === 0) {
-      historyContainer.innerHTML = `<div class="empty-state">Няма записана история</div>`;
-      return;
-    }
+    api("history.php")
+      .then((history) => {
+        if (history.length === 0) {
+          historyContainer.innerHTML =
+            '<div class="empty-state">Няма записана история</div>';
+          return;
+        }
 
-    history.forEach((entry, index) => {
-      const wrapper = document.createElement("div");
-      wrapper.className = "history-item";
+        historyContainer.innerHTML = "";
 
-      wrapper.innerHTML = `
-        <div class="history-item-header">
-          <div class="history-item-title">${getFormatLabel(
-            entry.settings
-          )}</div>
-          <div class="history-item-time">${new Date(
-            entry.timestamp
-          ).toLocaleString()}</div>
-        </div>
-        <div class="history-item-preview">${truncate(entry.input)}</div>
-        <button class="btn btn-outline" data-index="${index}">Зареди</button>
-      `;
+        history.forEach((entry, index) => {
+          const wrapper = document.createElement("div");
+          wrapper.className = "history-item";
 
-      wrapper.querySelector("button").addEventListener("click", () => {
-        inputField.value = entry.input;
-        manualFormatField.value = entry.settings;
-        formatModeRadios.forEach((r) => {
-          if (r.value === "manual") r.checked = true;
+          const ts = new Date(entry.created_at).toLocaleString();
+
+          wrapper.innerHTML = `
+          <div class="history-item-header">
+            <div class="history-item-title">${getFormatLabel(
+              entry.settings
+            )}</div>
+            <div class="history-item-time">${ts}</div>
+          </div>
+          <div class="history-item-preview">${truncate(entry.input_text)}</div>
+          <button class="btn btn-outline" data-index="${index}">Зареди</button>
+        `;
+
+          wrapper.querySelector("button").addEventListener("click", () => {
+            inputField.value = entry.input_text;
+            manualFormatField.value = entry.settings;
+            formatModeRadios.forEach((r) => {
+              if (r.value === "manual") r.checked = true;
+            });
+            manualFormatContainer.style.display = "block";
+            dropdownFormatsContainer.style.display = "none";
+
+            outputField.value = entry.output_text;
+            tabs[0].click();
+          });
+
+          historyContainer.appendChild(wrapper);
         });
-        manualFormatContainer.style.display = "block";
-        dropdownFormatsContainer.style.display = "none";
-
-        outputField.value = entry.output;
-        tabs[0].click();
+      })
+      .catch(() => {
+        historyContainer.innerHTML =
+          '<div class="empty-state">Грешка при зареждане на историята</div>';
       });
-
-      historyContainer.appendChild(wrapper);
-    });
   }
 
   function truncate(str) {
@@ -159,6 +177,7 @@ window.initApp = function initApp() {
     logoutBtn.addEventListener("click", async () => {
       try {
         await api("logout.php");
+        historyContainer.innerHTML = "";
         showAuth(); // Show login modal again
       } catch (err) {
         alert("Грешка при изход.");
