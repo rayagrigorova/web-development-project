@@ -66,7 +66,7 @@ authForm.addEventListener("submit", async (e) => {
 
     hideAuth();
     initApp();
-    window.renderHistory();
+    if (window.renderHistory) window.renderHistory();
   } catch (err) {
     authErr.textContent = err.error || "Неизвестна грешка.";
     authErr.classList.remove("hidden");
@@ -90,12 +90,11 @@ document.getElementById("logout-btn").addEventListener("click", async () => {
     await api("logout.php");
   } catch {}
 
-  // clear editors and history
-  const inputField = document.getElementById("input-field");
-  inputField.value = SAMPLE_JSON;
+  document.getElementById("input-field").value = SAMPLE_JSON;
+  document.getElementById("output-field").value = "";
+  document.getElementById("manual-format-field").value = DEFAULT_SETTINGS_TEXT;
 
   document.getElementById("output-field").value = "";
-  document.getElementById("manual-format-field").value = "";
   const hist = document.getElementById("history-container");
   if (hist) hist.innerHTML = "";
 

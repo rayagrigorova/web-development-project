@@ -7,6 +7,12 @@ const SAMPLE_JSON = `{
   }
 }`;
 
+const DEFAULT_SETTINGS_TEXT = `inputformat=json
+outputformat=yaml
+savetohistory=false
+align=true
+case=none`;
+
 window.initApp = function initApp() {
   if (window._appInitialized) return;
   window._appInitialized = true;
@@ -185,5 +191,6 @@ window.initApp = function initApp() {
     });
   }
 
+  window.renderHistory = renderHistory;
   renderHistory();
 };
