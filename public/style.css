@@ -362,6 +362,9 @@ textarea.code-editor:focus {
   border-bottom: 1px solid var(--gray-200);
   transition: var(--transition);
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .history-item:hover {
@@ -370,6 +373,22 @@ textarea.code-editor:focus {
 
 .history-item:last-child {
   border-bottom: none;
+}
+
+.history-item button {
+  align-self: flex-start;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.75rem;
+  background-color: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.history-item button:hover {
+  background-color: var(--primary-dark);
 }
 
 .history-item-header {
@@ -520,4 +539,15 @@ textarea.code-editor:focus {
 .auth-error {
   color: var(--danger);
   margin-top: 1rem;
+}
+
+.user-email {
+  display: inline-block;
+  font-weight: 500;
+  color: white;
+  margin-right: 1rem;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
 }

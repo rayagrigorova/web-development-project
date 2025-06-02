@@ -24,6 +24,11 @@ const authErr = document.getElementById("auth-error");
 
 let mode = "login"; // "login" | "register"
 
+function setLoggedUser(email = "") {
+  const lbl = document.getElementById("current-user");
+  lbl.textContent = email ? `Вписан като: ${email}` : "";
+}
+
 function showAuth() {
   authModal.classList.remove("hidden");
 }
@@ -55,6 +60,10 @@ authForm.addEventListener("submit", async (e) => {
     if (mode === "login") await api("login.php", { method: "POST", body });
     if (mode === "register")
       await api("register.php", { method: "POST", body });
+
+    const me = await api("me.php"); // { id, email }
+    setLoggedUser(me.email);
+
     hideAuth();
     initApp(); // ← render the main UI
   } catch (err) {
@@ -66,9 +75,19 @@ authForm.addEventListener("submit", async (e) => {
 /* ------------- Kick-off on page load ------------- */
 window.addEventListener("DOMContentLoaded", async () => {
   try {
-    await api("me.php");
+    const me = await api("me.php");
+    console.log("me:", me);
+    setLoggedUser(me.email);
     initApp(); // already logged in
   } catch {
     showAuth(); // forces login / registration
   }
+});
+
+document.getElementById("logout-btn").addEventListener("click", async () => {
+  try {
+    await api("logout.php");
+  } catch {}
+  setLoggedUser("");
+  showAuth();
 });

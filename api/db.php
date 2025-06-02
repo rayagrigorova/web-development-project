@@ -5,7 +5,7 @@ header('Content-Type: application/json');
 try {
     $pdo = new PDO(
         'mysql:host=localhost;dbname=converter;charset=utf8mb4',
-        'root',            // ← adjust user / pass
+        'root',
         '',
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
