@@ -154,5 +154,17 @@ window.initApp = function initApp() {
     return `${from} → ${to}`;
   }
 
+  const logoutBtn = document.getElementById("logout-btn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await api("logout.php");
+        showAuth(); // Show login modal again
+      } catch (err) {
+        alert("Грешка при изход.");
+      }
+    });
+  }
+
   renderHistory();
 };
