@@ -47,9 +47,9 @@ window.initApp = function initApp() {
   formatModeRadios.forEach((radio) => {
     radio.addEventListener("change", () => {
       if (radio.value === "manual") {
-        const inputFmt = inputFormatSelect.value.toLowerCase();
-        const outputFmt = outputFormatSelect.value.toLowerCase();
-        manualFormatField.value = `inputformat=${inputFmt}\noutputformat=${outputFmt}`;
+        if (!manualFormatField.value.trim()) {
+          manualFormatField.value = DEFAULT_SETTINGS_TEXT;
+        }
 
         manualFormatContainer.style.display = "block";
         dropdownFormatsContainer.style.display = "none";
