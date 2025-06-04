@@ -551,3 +551,77 @@ textarea.code-editor:focus {
   border-radius: var(--border-radius);
   font-size: 0.875rem;
 }
+
+/* ---------- HELP TAB ---------- */
+.help-panel {
+  background: #fff;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  padding: 2rem 2.5rem;
+  line-height: 1.7;
+  color: var(--gray-800);
+}
+
+.help-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  color: var(--primary);
+}
+
+.help-header h2 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.help-section {
+  margin-top: 2rem;
+}
+.help-section h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.help-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.help-list li {
+  background: var(--gray-100);
+  border-left: 4px solid var(--primary);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--border-radius);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: "Menlo", "Monaco", monospace;
+  font-size: 0.85rem;
+}
+
+.help-list .key {
+  color: var(--gray-800);
+}
+.help-list .value {
+  color: var(--accent);
+  word-break: break-all;
+}
+
+.help-example {
+  background: #272822;
+  color: #f8f8f2;
+  padding: 1rem 1.25rem;
+  border-radius: var(--border-radius);
+  overflow-x: auto;
+  font-size: 0.9rem;
+}
