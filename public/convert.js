@@ -66,7 +66,7 @@
       const v = rest.join("=");
       if (!k || v === undefined) return;
 
-      const key = k.toLowerCase();
+      const key = k.startsWith("replace.") ? k : k.toLowerCase();
       switch (key) {
         case "inputformat":
         case "outputformat":
@@ -109,25 +109,49 @@
   /* ───────────────────  JSON ⇄ Emmet conversions  ─────────────────── */
   function jsonToEmmet(json) {
     function walk(node) {
-      if (Array.isArray(node)) {
-        if (node.length === 0) return "";
-        const first = node[0];
-        const repeated = walk(first);
-        return `${repeated}*${node.length}`;
-      }
       if (isObject(node)) {
         return Object.entries(node)
           .map(([k, v]) => {
-            if (isObject(v) || Array.isArray(v)) {
+            // ---------- ARRAYS ----------
+            if (Array.isArray(v)) {
+              if (v.length === 0) return k; // li → []
+
+              const parts = v.map((el) => {
+                // primitives → li{foo}
+                if (!isObject(el) && !Array.isArray(el)) return `${k}{${el}}`;
+
+                // empty objects → plain <li>
+                if (isObject(el) && Object.keys(el).length === 0) return k;
+
+                // objects / arrays → li>...
+                const inner = walk(el);
+                const grouped = inner.includes("+") ? `(${inner})` : inner;
+                return `${k}>${grouped}`;
+              });
+
+              // li{a}+li{b}+li{c}
+              return parts.join("+");
+            }
+
+            // ---------- NESTED OBJECT ----------
+            if (isObject(v)) {
               const nested = walk(v);
               const needsGroup = nested.includes("+");
               return `${k}>${needsGroup ? `(${nested})` : nested}`;
-            } else {
-              return `${k}{${v}}`;
             }
+
+            // ---------- LEAF VALUE ----------
+            return `${k}{${v}}`;
           })
           .join("+");
       }
+
+      // ---------- ROOT-LEVEL ARRAY (RARE) ----------
+      if (Array.isArray(node)) {
+        return node.map(walk).join("+");
+      }
+
+      // ---------- LEAF VALUE ----------
       return `{${String(node)}}`;
     }
 
@@ -175,38 +199,46 @@
     }
 
     function parseTerm() {
-      // Group term: starts with '('
       if (peek() === "(") {
         next(); // consume '('
-        const grp = parseNode(); // parse full inner expression
+        const group = parseNode();
         if (peek() !== ")") throw Error("Expected ')'");
         next(); // consume ')'
-        return { __group: grp }; // return wrapped group
+        return { __group: group };
       }
 
       const name = parseIdent();
-      let value = "";
 
+      let value = {};
+      let count = 1;
+
+      // Optional: repetition
       if (peek() === "*") {
-        next(); // consume '*'
-        const count = parseNumber();
-        value = repeat({ __tag: name }, count);
+        next();
+        count = parseNumber();
       }
 
+      // Optional: leaf content
       if (peek() === "{") {
-        next(); // consume '{'
-        value = parseText();
+        next();
+        const text = parseText();
+        value = text;
       }
 
+      // Optional: nested child
       if (peek() === ">") {
         next();
         let child = parseTerm();
-
         if (child && child.__group) child = child.__group;
         value = child;
       }
 
-      return { name, value };
+      // Return object or repeated array
+      if (count > 1) {
+        return { name, value: repeat(value, count) };
+      } else {
+        return { name, value };
+      }
     }
 
     function buildObj(term) {
@@ -218,7 +250,10 @@
       const obj = {};
 
       if (Array.isArray(term.value)) {
-        obj[term.name] = term.value.map(() => ({}));
+        const arr = term.value.map((v) =>
+          typeof v === "string" || typeof v === "number" ? coerce(v) : v
+        );
+        obj[term.name] = arr;
         return obj;
       }
 
@@ -240,6 +275,7 @@
       } else {
         obj[term.name] = {};
       }
+
       return obj;
     }
 
@@ -293,12 +329,16 @@
     }
 
     function mergeJSON(a, b) {
-      const kA = Object.keys(a)[0];
-      const kB = Object.keys(b)[0];
-      const res = {};
-      res[kA] = isObject(a[kA]) ? { ...a[kA] } : a[kA];
-      res[kB] = isObject(b[kB]) ? { ...b[kB] } : b[kB];
-      return { ...a, ...b };
+      const res = { ...a };
+      for (const [k, v] of Object.entries(b)) {
+        if (k in res) {
+          // a sibling with the same tag already exists → build / extend an array
+          res[k] = Array.isArray(res[k]) ? [...res[k], v] : [res[k], v];
+        } else {
+          res[k] = v;
+        }
+      }
+      return res;
     }
 
     function parseNode() {
@@ -398,7 +438,16 @@
     const parser = new DOMParser();
     const doc = parser.parseFromString(xmlStr, "application/xml");
     const root = doc.documentElement;
-    return { [root.nodeName]: xmlNodeToJSON(root) };
+    function unwrap(node) {
+      if (Array.isArray(node)) return node.map(unwrap);
+      if (typeof node === "object" && node !== null) {
+        const keys = Object.keys(node);
+        if (keys.length === 1 && keys[0] === "#text") return node["#text"];
+        return Object.fromEntries(keys.map((k) => [k, unwrap(node[k])]));
+      }
+      return node;
+    }
+    return { [root.nodeName]: unwrap(xmlNodeToJSON(root)) };
   }
 
   function flattenObject(obj, prefix = "") {
@@ -478,18 +527,20 @@
   function applyReplacements(obj, opts) {
     function walk(node) {
       if (Array.isArray(node)) return node.map(walk);
-      if (!isObject(node)) {
-        if (typeof node === "string" && opts.replace.val[node] !== undefined) {
-          return opts.replace.val[node];
-        }
-        return node;
+      if (isObject(node)) {
+        return Object.fromEntries(
+          Object.entries(node).map(([k, v]) => {
+            const nk = opts.replace.tag[k] || k;
+            return [nk, walk(v)];
+          })
+        );
       }
-      return Object.fromEntries(
-        Object.entries(node).map(([k, v]) => {
-          const nk = opts.replace.tag[k] || k;
-          return [nk, walk(v)];
-        })
-      );
+      return Object.prototype.hasOwnProperty.call(
+        opts.replace.val,
+        String(node)
+      )
+        ? opts.replace.val[String(node)]
+        : node;
     }
     return walk(obj);
   }
@@ -507,8 +558,21 @@
       throw Error(
         "Не може да се определи входният формат и не е зададен ръчно."
       );
-    if (inFmt === outFmt)
+
+    const needsChanges =
+      opts.case !== "none" ||
+      Object.keys(opts.replace.tag).length > 0 ||
+      Object.keys(opts.replace.val).length > 0;
+
+    if (inFmt === outFmt && !needsChanges) {
+      if (inFmt === "json" && opts.align) {
+        try {
+          const pretty = JSON.stringify(JSON.parse(inputStr), null, 2);
+          return { result: pretty, meta: { inFmt, outFmt, opts } };
+        } catch {}
+      }
       return { result: inputStr, meta: { inFmt, outFmt, opts } };
+    }
 
     // Step 1 – parse INPUT into JS object / primitive ------------------
     let data;
