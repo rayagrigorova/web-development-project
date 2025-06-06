@@ -141,7 +141,7 @@
             }
 
             // ---------- LEAF VALUE ----------
-            return `${k}{${v}}`;
+            return typeof v === "number" ? `${k}{${v}}` : `${k}{${String(v)}}`;
           })
           .join("+");
       }
@@ -156,6 +156,20 @@
     }
 
     return walk(json);
+  }
+
+  function mergeJSON(a, b) {
+    const res = { ...a };
+    for (const [k, v] of Object.entries(b)) {
+      if (k in res) {
+        // merge same-key siblings into array
+        const prev = res[k];
+        res[k] = Array.isArray(prev) ? [...prev, v] : [prev, v];
+      } else {
+        res[k] = v;
+      }
+    }
+    return res;
   }
 
   // Extremely small parser that supports only the grammar we emit above:
@@ -247,31 +261,38 @@
         return String(n) === v ? n : v;
       };
 
+      function flatten(node) {
+        if (
+          isObject(node) &&
+          "name" in node &&
+          "value" in node &&
+          typeof node.name === "string"
+        ) {
+          return { [node.name]: flatten(node.value) };
+        }
+        if (Array.isArray(node)) {
+          return node.map(flatten);
+        }
+        return node;
+      }
+
       const obj = {};
 
       if (Array.isArray(term.value)) {
-        const arr = term.value.map((v) =>
-          typeof v === "string" || typeof v === "number" ? coerce(v) : v
+        obj[term.name] = term.value.map((v) =>
+          typeof v === "string" || typeof v === "number"
+            ? coerce(v)
+            : flatten(v)
         );
-        obj[term.name] = arr;
-        return obj;
-      }
-
-      if (isObject(term.value)) {
-        if (
-          Object.keys(term.value).length === 2 &&
-          "name" in term.value &&
-          "value" in term.value
-        ) {
-          obj[term.name] = { [term.value.name]: term.value.value };
-        } else {
-          obj[term.name] = term.value;
-        }
         return obj;
       }
 
       if (term.value !== "" && term.value !== null) {
-        obj[term.name] = coerce(term.value);
+        if (typeof term.value === "string") {
+          obj[term.name] = coerce(term.value);
+        } else {
+          obj[term.name] = flatten(term.value);
+        }
       } else {
         obj[term.name] = {};
       }
@@ -304,7 +325,22 @@
           const childOb = child.__group ? child.__group : buildObj(child);
 
           const parentPtr = getParentPtr();
-          Object.assign(parentPtr, childOb);
+          const parentKey = Object.keys(parentPtr)[0];
+
+          if (
+            isObject(childOb) &&
+            Object.keys(childOb).length === 1 &&
+            isObject(Object.values(childOb)[0]) &&
+            "name" in Object.values(childOb)[0] &&
+            "value" in Object.values(childOb)[0]
+          ) {
+            // Flatten nested { name, value } under parent
+            const inner = Object.values(childOb)[0];
+            parentPtr[parentKey][inner.name] = inner.value;
+          } else {
+            const [childKey, childVal] = Object.entries(childOb)[0];
+            parentPtr[parentKey][childKey] = childVal;
+          }
 
           if (peek() === ">") {
             const childKey = Object.keys(childOb)[0];
@@ -319,26 +355,20 @@
             : buildObj(sibling);
 
           const parentPtr = getParentPtr();
-          Object.assign(parentPtr, siblingOb);
+          for (const [k, v] of Object.entries(siblingOb)) {
+            if (k in parentPtr) {
+              const prev = parentPtr[k];
+              parentPtr[k] = Array.isArray(prev) ? [...prev, v] : [prev, v];
+            } else {
+              parentPtr[k] = v;
+            }
+          }
         } else {
           break;
         }
       }
 
       return tree;
-    }
-
-    function mergeJSON(a, b) {
-      const res = { ...a };
-      for (const [k, v] of Object.entries(b)) {
-        if (k in res) {
-          // a sibling with the same tag already exists → build / extend an array
-          res[k] = Array.isArray(res[k]) ? [...res[k], v] : [res[k], v];
-        } else {
-          res[k] = v;
-        }
-      }
-      return res;
     }
 
     function parseNode() {
@@ -415,7 +445,11 @@
   }
 
   function xmlNodeToJSON(node) {
-    if (node.nodeType === 3) return node.nodeValue.trim(); // TEXT_NODE
+    if (node.nodeType === 3) {
+      const raw = node.nodeValue.trim();
+      const n = Number(raw);
+      return String(n) === raw ? n : raw;
+    }
 
     const obj = {};
     node.childNodes.forEach((child) => {
@@ -640,5 +674,11 @@
     parseSettings,
     convert, // async → returns { result, meta }
     detectFormat, // exposed mostly for debugging
+    jsonToEmmet,
+    emmetToJSON,
+    jsonToXML,
+    __testonly: {
+      mergeJSON,
+    },
   };
 })(typeof window !== "undefined" ? window : global);
