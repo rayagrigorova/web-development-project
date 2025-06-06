@@ -109,8 +109,14 @@ window.initApp = function initApp() {
           input,
           output: result,
         }),
-      }).catch(() => {});
-      renderHistory();
+      })
+        .then(() => {
+          showToast("Успешно запазено в историята!");
+          renderHistory();
+        })
+        .catch(() => {
+          showToast("Неуспешен запис в историята.", "error");
+        });
     }
   });
 
@@ -194,3 +200,74 @@ window.initApp = function initApp() {
   window.renderHistory = renderHistory;
   renderHistory();
 };
+
+function showToast(message, type = "success") {
+  const container = document.getElementById("toast-container");
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<i class="fas ${
+    type === "success" ? "fa-check-circle" : "fa-exclamation-triangle"
+  }"></i> ${message}`;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
+}
+
+document
+  .getElementById("save-history-btn")
+  .addEventListener("click", async () => {
+    const inputField = document.getElementById("input-field");
+    const outputField = document.getElementById("output-field");
+    const inputFormat = document
+      .getElementById("input-format-select")
+      .value.toLowerCase();
+    const outputFormat = document
+      .getElementById("output-format-select")
+      .value.toLowerCase();
+    const inputText = inputField.value.trim();
+
+    if (!inputText) {
+      alert("Полето „Вход“ е празно.");
+      return;
+    }
+
+    // Step 1: Run conversion
+    const settings = `
+      inputformat=${inputFormat}
+      outputformat=${outputFormat}
+      savetohistory=true
+    `.trim();
+
+    let resultData, meta;
+    try {
+      const resultObj = await DataTransformer.convert(inputText, settings);
+      resultData = resultObj.result;
+      meta = resultObj.meta;
+      outputField.value = resultData;
+    } catch (err) {
+      alert("Грешка при трансформацията: " + err.message);
+      return;
+    }
+
+    // Step 2: Use api() helper for saving to backend safely
+    try {
+      const response = await api("save_conversion.php", {
+        method: "POST",
+        body: JSON.stringify({
+          input_format: meta.inFmt,
+          output_format: meta.outFmt,
+          settings,
+          input: inputText,
+          output: resultData,
+        }),
+      });
+
+      showToast("Успешно запазено в историята!");
+      renderHistory();
+    } catch (err) {
+      alert("Грешка при записа: " + err.message);
+    }
+  });

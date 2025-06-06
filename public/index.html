@@ -124,6 +124,15 @@
                     </select>
                   </div>
                 </div>
+                <div class="form-row" style="justify-content: flex-end">
+                  <button
+                    id="save-history-btn"
+                    class="btn btn-primary btn-lg"
+                    title="Запази тази трансформация в историята"
+                  >
+                    <i class="fas fa-save"></i> Запази в историята
+                  </button>
+                </div>
               </div>
               <div
                 id="manual-format-container"
@@ -267,5 +276,7 @@ replace.val.1.0=latest</code></pre>
     <script src="convert.js"></script>
     <script src="script.js"></script>
     <script src="auth.js"></script>
+
+    <div id="toast-container"></div>
   </body>
 </html>
