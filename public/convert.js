@@ -57,26 +57,46 @@
       replace: { tag: {}, val: {} },
     };
 
+    const VALID_INPUTS = ["json", "yaml", "xml", "csv", "emmet", "auto"];
+    const VALID_OUTPUTS = ["json", "yaml", "xml", "csv", "emmet"];
+    const VALID_BOOL = ["true", "false", "1", "0", "yes", "no"];
+    const VALID_CASE = ["upper", "camel", "snake", "none"];
+
     if (!raw) return out;
 
-    raw.split(/\r?\n/).forEach((line) => {
+    raw.split(/\r?\n/).forEach((line, i) => {
       const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) return; // comment / empty
+      if (!trimmed || trimmed.startsWith("#")) return;
       const [k, ...rest] = trimmed.split("=");
-      const v = rest.join("=");
+      const v = rest.join("=").trim();
       if (!k || v === undefined) return;
 
       const key = k.startsWith("replace.") ? k : k.toLowerCase();
+
       switch (key) {
         case "inputformat":
+          if (!VALID_INPUTS.includes(v.toLowerCase())) {
+            throw Error(`Невалидна настройка: inputformat=${v}`);
+          }
+          out.inputformat = v.toLowerCase();
+          break;
         case "outputformat":
-          out[key] = v.toLowerCase();
+          if (!VALID_OUTPUTS.includes(v.toLowerCase())) {
+            throw Error(`Невалидна настройка: outputformat=${v}`);
+          }
+          out.outputformat = v.toLowerCase();
           break;
         case "savetohistory":
         case "align":
+          if (!VALID_BOOL.includes(v.toLowerCase())) {
+            throw Error(`Невалидна настройка: ${key}=${v}`);
+          }
           out[key] = /^(true|1|yes)$/i.test(v);
           break;
         case "case":
+          if (!VALID_CASE.includes(v.toLowerCase())) {
+            throw Error(`Невалидна настройка: case=${v}`);
+          }
           out.case = v.toLowerCase();
           break;
         default: {
@@ -84,6 +104,8 @@
           if (m) {
             const [, type, find] = m;
             out.replace[type][find] = v;
+          } else {
+            throw Error(`Непозната настройка: ${key}`);
           }
         }
       }
