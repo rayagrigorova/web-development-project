@@ -53,9 +53,12 @@ window.initApp = function initApp() {
 
         manualFormatContainer.style.display = "block";
         dropdownFormatsContainer.style.display = "none";
+        document.getElementById("save-history-btn").style.display = "none";
       } else {
         manualFormatContainer.style.display = "none";
         dropdownFormatsContainer.style.display = "block";
+        document.getElementById("save-history-btn").style.display =
+          "inline-flex";
       }
     });
   });
@@ -192,7 +195,7 @@ window.initApp = function initApp() {
         historyContainer.innerHTML = "";
         showAuth(); // Show login modal again
       } catch (err) {
-        alert("Грешка при изход.");
+        showToast("Грешка при изход.", "error");
       }
     });
   }
@@ -230,7 +233,7 @@ document
     const inputText = inputField.value.trim();
 
     if (!inputText) {
-      alert("Полето „Вход“ е празно.");
+      showToast("Полето „Вход“ е празно.", "error");
       return;
     }
 
@@ -248,7 +251,7 @@ document
       meta = resultObj.meta;
       outputField.value = resultData;
     } catch (err) {
-      alert("Грешка при трансформацията: " + err.message);
+      showToast("Грешка при трансформацията: " + err.message, "error");
       return;
     }
 
@@ -268,6 +271,6 @@ document
       showToast("Успешно запазено в историята!");
       renderHistory();
     } catch (err) {
-      alert("Грешка при записа: " + err.message);
+      showToast("Грешка при записа: " + err.message, "error");
     }
   });
