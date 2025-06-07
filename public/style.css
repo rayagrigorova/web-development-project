@@ -743,3 +743,29 @@ textarea.code-editor:focus {
   gap: 1rem;
   margin-top: 1.5rem;
 }
+
+.file-upload {
+  margin-top: 1rem;
+  text-align: left;
+}
+
+.file-upload-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--primary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.file-upload-label:hover {
+  text-decoration: underline;
+}
+
+.file-upload input[type="file"] {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}

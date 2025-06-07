@@ -13,6 +13,9 @@ savetohistory=false
 align=true
 case=none`;
 
+const inputField = document.getElementById("input-field");
+const outputField = document.getElementById("output-field");
+
 window.initApp = function initApp() {
   if (window._appInitialized) return;
   window._appInitialized = true;
@@ -65,8 +68,6 @@ window.initApp = function initApp() {
 
   // Transform functionality
   const transformBtn = document.getElementById("transform-btn");
-  const inputField = document.getElementById("input-field");
-  const outputField = document.getElementById("output-field");
   const historyContainer = document.getElementById("history-container");
 
   transformBtn.addEventListener("click", async () => {
@@ -222,8 +223,6 @@ function showToast(message, type = "success") {
 document
   .getElementById("save-history-btn")
   .addEventListener("click", async () => {
-    const inputField = document.getElementById("input-field");
-    const outputField = document.getElementById("output-field");
     const inputFormat = document
       .getElementById("input-format-select")
       .value.toLowerCase();
@@ -274,3 +273,28 @@ document
       showToast("Грешка при записа: " + err.message, "error");
     }
   });
+
+const fileUpload = document.getElementById("file-upload");
+
+const fileInfo = document.querySelector(".file-info");
+const removeFileBtn = document.getElementById("remove-file-btn");
+
+fileUpload.addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  try {
+    const text = await file.text();
+    inputField.value = text;
+    fileInfo.style.display = "flex";
+    showToast(`Файлът „${file.name}“ беше зареден успешно.`);
+  } catch (err) {
+    showToast("Грешка при зареждане на файла.", "error");
+  }
+});
+
+removeFileBtn.addEventListener("click", () => {
+  fileUpload.value = "";
+  inputField.value = "";
+  fileInfo.style.display = "none";
+});
