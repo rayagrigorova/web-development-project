@@ -463,6 +463,12 @@
   }
 
   function jsonToXML(obj) {
+    if (Array.isArray(obj)) {
+      const children = obj
+        .map((item) => buildXML(item, "record", "  "))
+        .join("");
+      return `<root>\n${children}</root>`;
+    }
     return buildXML(obj, "root").trim();
   }
 
