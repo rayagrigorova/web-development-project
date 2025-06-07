@@ -283,6 +283,23 @@ fileUpload.addEventListener("change", async (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
+  const allowedExtensions = [
+    "json",
+    "yaml",
+    "yml",
+    "xml",
+    "csv",
+    "emmet",
+    "txt",
+  ];
+  const extension = file.name.split(".").pop().toLowerCase();
+
+  if (!allowedExtensions.includes(extension)) {
+    showToast(`Неподдържан файлов формат: .${extension}`, "error");
+    fileUpload.value = "";
+    return;
+  }
+
   try {
     const text = await file.text();
     inputField.value = text;
