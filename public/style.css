@@ -744,6 +744,18 @@ textarea.code-editor:focus {
   margin-top: 1.5rem;
 }
 
+.file-upload-wrapper {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background-color: #fff;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem; /* по-голямо разстояние между елементите */
+}
+
 .file-upload {
   margin-top: 1rem;
   text-align: left;
@@ -758,14 +770,53 @@ textarea.code-editor:focus {
   color: var(--primary);
   cursor: pointer;
   transition: var(--transition);
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--primary);
+  border-radius: var(--border-radius);
 }
 
 .file-upload-label:hover {
   text-decoration: underline;
 }
 
-.file-upload input[type="file"] {
-  display: block;
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
+input[type="file"] {
+  display: none;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+#remove-file-btn {
+  background-color: var(--danger);
+  color: white;
+  border: none;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--border-radius);
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+#remove-file-btn:hover {
+  background-color: #d41b63;
+}
+
+.file-upload-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+#file-name {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--gray-700, #374151);
+  font-family: "Inter", sans-serif;
 }

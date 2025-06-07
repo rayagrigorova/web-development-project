@@ -62,25 +62,19 @@
                   placeholder="Въведете входните данни тук..."
                 ></textarea>
 
-                <div class="file-upload">
-                  <label for="file-upload" class="file-upload-label">
-                    <i class="fas fa-file-upload"></i> Или качете файл
-                  </label>
-                  <input
-                    type="file"
-                    id="file-upload"
-                    accept=".json,.yaml,.yml,.xml,.csv,.txt"
-                  />
-                  <div class="file-info" style="display: none; margin-top: 4px">
-                    <small id="file-name" class="file-name"></small>
-                    <button
-                      id="remove-file-btn"
-                      title="Премахни файл"
-                      class="btn btn-sm"
-                      style="margin-left: 8px"
-                    >
-                      <i class="fas fa-times-circle"></i>
-                    </button>
+                <div class="file-upload-wrapper">
+                  <div class="file-upload-actions">
+                    <label for="file-upload" class="file-upload-label">
+                      <i class="fas fa-upload"></i> Качи файл
+                    </label>
+                    <input type="file" id="file-upload" />
+
+                    <div class="file-info" style="display: none">
+                      <span id="file-name"></span>
+                      <button id="remove-file-btn">
+                        <i class="fas fa-trash-alt"></i> Изтрий
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -287,6 +287,9 @@ fileUpload.addEventListener("change", async (e) => {
     const text = await file.text();
     inputField.value = text;
     fileInfo.style.display = "flex";
+    document.getElementById(
+      "file-name"
+    ).textContent = `Качен файл: ${file.name}`;
     showToast(`Файлът „${file.name}“ беше зареден успешно.`);
   } catch (err) {
     showToast("Грешка при зареждане на файла.", "error");
@@ -297,4 +300,5 @@ removeFileBtn.addEventListener("click", () => {
   fileUpload.value = "";
   inputField.value = "";
   fileInfo.style.display = "none";
+  document.getElementById("file-name").textContent = "";
 });
