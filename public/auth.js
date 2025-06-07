@@ -98,6 +98,14 @@ document.getElementById("logout-btn").addEventListener("click", async () => {
   const hist = document.getElementById("history-container");
   if (hist) hist.innerHTML = "";
 
+  const fileUpload = document.getElementById("file-upload");
+  const fileInfo = document.querySelector(".file-info");
+  const fileName = document.getElementById("file-name");
+
+  if (fileUpload) fileUpload.value = "";
+  if (fileInfo) fileInfo.style.display = "none";
+  if (fileName) fileName.textContent = "";
+
   setLoggedUser("");
   showAuth();
 });
