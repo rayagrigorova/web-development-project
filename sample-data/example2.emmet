@@ -1,1 +1,1 @@
-div.container>h1{Title}+p{Description}
+div>h1{Title}+p{Description}
