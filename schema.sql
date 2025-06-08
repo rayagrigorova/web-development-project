@@ -1,8 +1,10 @@
+-- Create the main database for format conversions
 CREATE DATABASE IF NOT EXISTS converter
   DEFAULT CHARACTER SET utf8mb4
   COLLATE utf8mb4_general_ci;
 USE converter;
 
+-- Table to store registered users
 CREATE TABLE users (
   id            INT          PRIMARY KEY AUTO_INCREMENT,
   email         VARCHAR(255) NOT NULL UNIQUE,
@@ -10,6 +12,7 @@ CREATE TABLE users (
   created_at    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Table to store each format conversion history
 CREATE TABLE conversions (
   id             INT           PRIMARY KEY AUTO_INCREMENT,
   user_id        INT           NOT NULL,
