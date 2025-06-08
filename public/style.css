@@ -1,3 +1,4 @@
+/* === CSS VARIABLES (THEME) === */
 :root {
   --primary: #4361ee;
   --primary-dark: #3a56d4;
@@ -26,6 +27,7 @@
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* === RESET & BASE STYLES === */
 * {
   margin: 0;
   padding: 0;
@@ -47,6 +49,7 @@ body {
   flex-direction: column;
 }
 
+/* === HEADER === */
 .app-header {
   background: linear-gradient(135deg, var(--primary), var(--secondary));
   color: white;
@@ -72,6 +75,7 @@ body {
   margin: 0 auto;
 }
 
+/* === FOOTER === */
 .app-footer {
   padding: 1.5rem 2rem;
   background-color: var(--dark);
@@ -87,6 +91,7 @@ body {
   align-items: center;
 }
 
+/* === LOGO === */
 .logo {
   display: flex;
   align-items: center;
@@ -99,6 +104,8 @@ body {
   font-size: 1.75rem;
   color: var(--success);
 }
+
+/* === BUTTONS === */
 .btn {
   padding: 0.5rem 1rem;
   border-radius: var(--border-radius);
@@ -136,11 +143,13 @@ body {
   font-size: 1rem;
 }
 
+/* === NAVIGATION === */
 .nav-actions {
   display: flex;
   gap: 1rem;
 }
 
+/* === TOOLBAR === */
 .toolbar {
   display: flex;
   justify-content: space-between;
@@ -163,6 +172,7 @@ body {
   gap: 0.75rem;
 }
 
+/* === TABS === */
 .tabs {
   display: flex;
   border-bottom: 1px solid var(--gray-200);
@@ -208,6 +218,7 @@ body {
   animation: fadeIn 0.3s ease-out;
 }
 
+/* === EDITOR PANEL === */
 .editor-panel {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -267,6 +278,7 @@ textarea.code-editor:focus {
   box-shadow: inset 0 0 0 2px var(--primary);
 }
 
+/* === SETTINGS PANEL === */
 .settings-panel {
   background-color: white;
   border-radius: var(--border-radius);
@@ -343,6 +355,7 @@ textarea.code-editor:focus {
   margin-right: 5px;
 }
 
+/* === ACTION BAR === */
 .action-bar {
   display: flex;
   justify-content: flex-end;
@@ -350,6 +363,7 @@ textarea.code-editor:focus {
   margin-bottom: 2rem;
 }
 
+/* === HISTORY PANEL === */
 .history-panel {
   background-color: white;
   border-radius: var(--border-radius);
@@ -415,6 +429,7 @@ textarea.code-editor:focus {
   text-overflow: ellipsis;
 }
 
+/* === EMPTY STATE (History Panel) === */
 .empty-state {
   padding: 3rem 1rem;
   text-align: center;
@@ -427,6 +442,7 @@ textarea.code-editor:focus {
   color: var(--gray-300);
 }
 
+/* === STATUS BAR === */
 .status-bar {
   padding: 0.75rem 1.5rem;
   background-color: var(--gray-100);
@@ -437,6 +453,7 @@ textarea.code-editor:focus {
   justify-content: space-between;
 }
 
+/* === FOOTER LINKS === */
 .footer-links {
   display: flex;
   gap: 1.5rem;
@@ -456,10 +473,12 @@ textarea.code-editor:focus {
   animation: fadeIn 0.3s ease-out forwards;
 }
 
+/* === DARK MODE TOGGLE (HIDDEN) === */
 .dark-mode {
   display: none;
 }
 
+/* === ANIMATIONS & TRANSITIONS === */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -506,11 +525,13 @@ textarea.code-editor:focus {
   }
 }
 
+/* === MANUAL FORMAT SECTION === */
 #manual-format-container {
   margin-top: 15px;
   transition: all 0.3s ease;
 }
 
+/* === MODAL DIALOGS === */
 .modal.hidden {
   display: none;
 }
@@ -536,6 +557,7 @@ textarea.code-editor:focus {
   gap: 1rem;
 }
 
+/* === AUTHENTICATION FORM === */
 #auth-form input[type="email"],
 #auth-form input[type="password"] {
   border: 1px solid var(--gray-300);
@@ -612,7 +634,7 @@ textarea.code-editor:focus {
   font-size: 0.875rem;
 }
 
-/* ---------- HELP TAB ---------- */
+/* === HELP PANEL === */
 .help-panel {
   background: #fff;
   border-radius: var(--border-radius);
@@ -686,6 +708,7 @@ textarea.code-editor:focus {
   font-size: 0.9rem;
 }
 
+/* === TOAST NOTIFICATIONS === */
 #toast-container {
   position: fixed;
   top: 1.5rem;
@@ -744,6 +767,7 @@ textarea.code-editor:focus {
   margin-top: 1.5rem;
 }
 
+/* === FILE UPLOAD PANEL === */
 .file-upload-wrapper {
   margin-top: 2rem;
   padding: 1.5rem;
@@ -790,6 +814,13 @@ input[type="file"] {
   margin-top: 0.75rem;
 }
 
+.file-upload-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* === FILE UPLOAD: Remove button === */
 #remove-file-btn {
   background-color: var(--danger);
   color: white;
@@ -808,12 +839,7 @@ input[type="file"] {
   background-color: #d41b63;
 }
 
-.file-upload-actions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
+/* === FILE UPLOAD: File name display === */
 #file-name {
   font-size: 1rem;
   font-weight: 500;

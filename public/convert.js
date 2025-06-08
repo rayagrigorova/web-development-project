@@ -441,7 +441,10 @@
     const tree = parseNode();
 
     // Ensure the entire string was parsed
-    if (i !== str.length) throw Error("Unexpected trailing input");
+    if (i !== str.length) {
+      const trailing = str.slice(i);
+      throw new Error(`Unexpected trailing input: '${trailing}'`);
+    }
 
     return tree;
   }
