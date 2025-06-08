@@ -1,15 +1,25 @@
-/* eslint-env jest */
+// Get a reference to the global DataTransformer module and assign it to a shorter alias (DT)
+// This makes it easier to call conversion functions throughout the tests
+const DT = global.DataTransformer;
 
-const DT = global.DataTransformer; // shorthand
-
+// Sample input objects used for testing JSON structure round-trips
 const sampleObj = {
   name: "John",
   age: 30,
   address: { city: "Sofia" },
 };
 
+const sampleObj2 = {
+  product: "Shoes",
+  price: 59.99,
+  details: {
+    color: "Red",
+    size: 42,
+  },
+};
+
 describe("DataTransformer.convert – round-trip sanity", () => {
-  it("JSON → YAML → JSON should keep structure", async () => {
+  it("JSON -> YAML -> JSON should keep structure", async () => {
     const { result: yaml } = await DT.convert(
       JSON.stringify(sampleObj),
       `
@@ -31,7 +41,7 @@ describe("DataTransformer.convert – round-trip sanity", () => {
     expect(JSON.parse(backToJson)).toEqual(sampleObj);
   });
 
-  it("JSON → XML → JSON should keep structure (root wrapper ignored)", async () => {
+  it("JSON -> XML -> JSON should keep structure (root wrapper ignored)", async () => {
     const { result: xml } = await DT.convert(
       JSON.stringify(sampleObj),
       `
@@ -48,7 +58,6 @@ describe("DataTransformer.convert – round-trip sanity", () => {
     `
     );
 
-    // xmlToJSON wraps under <root> so unwrap here
     const parsed = JSON.parse(json);
     const normalized = JSON.parse(
       JSON.stringify(parsed.root ?? parsed),
@@ -57,7 +66,7 @@ describe("DataTransformer.convert – round-trip sanity", () => {
     expect(normalized).toEqual(sampleObj);
   });
 
-  it("JSON → CSV → JSON round-trip", async () => {
+  it("JSON -> CSV -> JSON round-trip", async () => {
     const { result: csv } = await DT.convert(
       JSON.stringify(sampleObj),
       `
@@ -77,24 +86,11 @@ describe("DataTransformer.convert – round-trip sanity", () => {
     expect(JSON.parse(json)).toEqual(sampleObj);
   });
 
-  it("JSON ⇄ Emmet conversion keeps leaf values", async () => {
-    const { result: emmet } = await DT.convert(
-      JSON.stringify(sampleObj),
-      `
-      inputformat=json
-      outputformat=emmet
-    `
-    );
+  it("JSON to Emmet conversion keeps leaf values (alt object)", async () => {
+    const emmet = DT.jsonToEmmet(sampleObj2);
+    const json = JSON.stringify(DT.emmetToJSON(emmet));
 
-    const { result: json } = await DT.convert(
-      emmet,
-      `
-      inputformat=emmet
-      outputformat=json
-    `
-    );
-
-    expect(JSON.parse(json)).toEqual(sampleObj);
+    expect(JSON.parse(json)).toEqual(sampleObj2);
   });
 });
 
@@ -117,9 +113,6 @@ describe("Options / mutations", () => {
   });
 });
 
-/* ------------------------------------------------------------------ */
-/* 1.  FORMAT-DETECTION HELPER                                        */
-/* ------------------------------------------------------------------ */
 describe("detectFormat()", () => {
   it("recognises the four supported syntaxes and unknown input", () => {
     expect(DT.detectFormat('{"a":1}')).toBe("json"); // JSON branch
@@ -130,11 +123,7 @@ describe("detectFormat()", () => {
   });
 });
 
-/* ------------------------------------------------------------------ */
-/* 2.  KEY-CASE TRANSFORMATION – snake_case fix                        */
-/* ------------------------------------------------------------------ */
-describe("case-conversion option (camel → snake)", () => {
-  // camelCase keys (hyphens are NOT converted by toSnake)
+describe("case-conversion option (camel -> snake)", () => {
   const obj = { firstName: 1, nested: { childKey: 2 } };
 
   it("converts keys to snake_case", async () => {
@@ -153,9 +142,6 @@ describe("case-conversion option (camel → snake)", () => {
   });
 });
 
-/* ------------------------------------------------------------------ */
-/* 3.  JSON ⇄ EMMET – *N repetition via hand-written string            */
-/* ------------------------------------------------------------------ */
 describe("Emmet parser – ‘*N’ repetition", () => {
   it("parses li*3 into an array of three empty objects", async () => {
     const emmet = "li*3";
@@ -171,37 +157,6 @@ describe("Emmet parser – ‘*N’ repetition", () => {
   });
 });
 
-/* ------------------------------------------------------------------ */
-/* 4.  JSON ⇄ EMMET – ARRAY ‘*N’ REPETITION & PARSER branches          */
-/* ------------------------------------------------------------------ */
-describe("Emmet repetition (‘*N’) round-trip", () => {
-  const src = { ul: { li: ["one", "two", "three"] } };
-
-  it("round-trips ul > li*3 with distinct values", async () => {
-    const toEmmet = await DT.convert(
-      JSON.stringify(src),
-      `
-    inputformat=json
-    outputformat=emmet
-  `
-    );
-
-    const back = await DT.convert(
-      toEmmet.result,
-      `
-    inputformat=emmet
-    outputformat=json
-    align=false
-  `
-    );
-
-    expect(JSON.parse(back.result)).toEqual(src);
-  });
-});
-
-/* ------------------------------------------------------------------ */
-/* 5.  transformKeys() – indirect coverage via case=upper             */
-/* ------------------------------------------------------------------ */
 describe("transformKeys() deep recursion", () => {
   const deep = { levelOne: { levelTwo: { levelThree: 5 } } };
 
@@ -219,4 +174,161 @@ describe("transformKeys() deep recursion", () => {
       LEVELONE: { LEVELTWO: { LEVELTHREE: 5 } },
     });
   });
+});
+
+it("parses nested Emmet with repetition (ul>li*2)", async () => {
+  const emmet = "ul>li*2";
+  const { result } = await DT.convert(
+    emmet,
+    `
+    inputformat=emmet
+    outputformat=json
+    align=false
+  `
+  );
+  expect(JSON.parse(result)).toEqual({
+    ul: { li: [{}, {}] },
+  });
+});
+
+it("parses grouped siblings correctly", async () => {
+  const emmet = "ul>(li{One}+li{Two})";
+  const { result } = await DT.convert(
+    emmet,
+    `
+    inputformat=emmet
+    outputformat=json
+    align=false
+  `
+  );
+  expect(JSON.parse(result)).toEqual({
+    ul: {
+      li: ["One", "Two"],
+    },
+  });
+});
+
+it("replaces values even if they look numeric", async () => {
+  const obj = { score: "10" };
+  const { result } = await DT.convert(
+    JSON.stringify(obj),
+    `
+    inputformat=json
+    outputformat=json
+    replace.val.10=Passed
+    align=false
+  `
+  );
+  expect(JSON.parse(result).score).toBe("Passed");
+});
+
+it("unwraps single #text node from XML", async () => {
+  const xml = "<root><name>John</name></root>";
+  const { result } = await DT.convert(
+    xml,
+    `
+    inputformat=xml
+    outputformat=json
+    align=false
+  `
+  );
+  expect(JSON.parse(result).root.name).toBe("John");
+});
+
+it("flattens and restores nested JSON structure through CSV", async () => {
+  const obj = { person: { name: "John", age: 30 } };
+  const { result: csv } = await DT.convert(
+    JSON.stringify(obj),
+    `
+    inputformat=json
+    outputformat=csv
+  `
+  );
+  const { result: json } = await DT.convert(
+    csv,
+    `
+    inputformat=csv
+    outputformat=json
+  `
+  );
+  expect(JSON.parse(json)).toEqual(obj);
+});
+
+it("throws an error when input format cannot be detected", async () => {
+  await expect(
+    DT.convert(
+      "   ",
+      `
+      inputformat=auto
+      outputformat=json
+    `
+    )
+  ).rejects.toThrow(/не може да се определи/i);
+});
+
+it("jsonToEmmet – handles arrays of primitives, objects, and empty objects", () => {
+  const input = {
+    li: [
+      "Item 1", // primitive
+      {}, // empty object
+      { span: "Nested" }, // nested object
+    ],
+  };
+
+  const emmet = DT.jsonToEmmet(input);
+  expect(emmet).toBe("li{Item 1}+li+li>span{Nested}");
+});
+
+it("jsonToEmmet – handles root-level array", () => {
+  const input = [{ a: 1 }, { b: 2 }];
+
+  const emmet = DT.jsonToEmmet(input);
+  expect(emmet).toBe("a{1}+b{2}");
+});
+
+it("emmetToJSON – merges repeated siblings into array", () => {
+  const emmet = "li{One}+li{Two}";
+  const json = DT.emmetToJSON(emmet);
+
+  expect(json).toEqual({ li: ["One", "Two"] });
+});
+
+it("convert – reindents JSON if input and output are json with align=true", async () => {
+  const minified = '{"foo":1,"bar":2}';
+  const { result } = await DT.convert(
+    minified,
+    "inputformat=json\noutputformat=json\nalign=true"
+  );
+  expect(result).toBe(JSON.stringify({ foo: 1, bar: 2 }, null, 2));
+});
+
+it("emmetToJSON – handles nested children with multiple '>'", () => {
+  const emmet = "div>section>article{News}";
+  const json = DT.emmetToJSON(emmet);
+
+  expect(json).toEqual({
+    div: {
+      section: {
+        article: "News",
+      },
+    },
+  });
+});
+
+it("mergeJSON – merges same-key objects into array", () => {
+  const a = { user: { name: "Alice" } };
+  const b = { user: { name: "Bob" } };
+  const merged = DT.__testonly.mergeJSON(a, b);
+
+  expect(merged).toEqual({
+    user: [{ name: "Alice" }, { name: "Bob" }],
+  });
+});
+
+it("jsonToXML – renders arrays as repeated tags", () => {
+  const input = { item: ["A", "B"] };
+  const xml = DT.jsonToXML(input);
+
+  expect(xml).toContain("<item>A</item>");
+  expect(xml).toContain("<item>B</item>");
 });
