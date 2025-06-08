@@ -3,26 +3,36 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Page title -->
     <title>Format Convertor</title>
+
+    <!-- FontAwesome for icons -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+
+    <!-- Inter font from Google Fonts -->
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Stylesheet -->
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <div class="app-container">
       <header class="app-header">
         <div class="header-content">
+          <!-- App logo with icon -->
           <div class="logo">
             <i class="fas fa-exchange-alt logo-icon"></i>
             <span>Format Convertor</span>
           </div>
 
+          <!-- User actions: email display and logout button -->
           <div class="user-actions">
             <span id="current-user" class="user-email"></span>
             <button id="logout-btn" class="btn btn-outline">
@@ -44,17 +54,23 @@
             </button>
           </div>
         </div>
+
+        <!-- Tab navigation -->
         <div class="tabs">
           <div class="tab active">Трансформатор</div>
           <div class="tab">История</div>
           <div class="tab">Помощ</div>
         </div>
+
+        <!-- Main transform tab: input, output, settings, and action buttons -->
         <div class="tab-content active" id="transform-tab">
           <div class="editor-panel">
+            <!-- Input editor -->
             <div class="editor-container">
               <div class="editor-header">
                 <div class="editor-title"><i class="fas fa-code"></i> Вход</div>
               </div>
+
               <div class="editor-body">
                 <textarea
                   id="input-field"
@@ -62,6 +78,7 @@
                   placeholder="Въведете входните данни тук..."
                 ></textarea>
 
+                <!-- File upload interface -->
                 <div class="file-upload-wrapper">
                   <div class="file-upload-actions">
                     <label for="file-upload" class="file-upload-label">
@@ -69,6 +86,7 @@
                     </label>
                     <input type="file" id="file-upload" />
 
+                    <!-- Display selected file name and delete button -->
                     <div class="file-info" style="display: none">
                       <span id="file-name"></span>
                       <button id="remove-file-btn">
@@ -79,12 +97,15 @@
                 </div>
               </div>
             </div>
+
+            <!-- Output editor -->
             <div class="editor-container">
               <div class="editor-header">
                 <div class="editor-title">
                   <i class="fas fa-file-code"></i> Изход
                 </div>
               </div>
+
               <div class="editor-body">
                 <textarea
                   id="output-field"
@@ -95,11 +116,14 @@
               </div>
             </div>
           </div>
+
           <div class="settings-panel">
             <div class="settings-header">
               <i class="fas fa-sliders-h"></i> Настройки за трансформация
             </div>
+
             <div class="settings-body">
+              <!-- Format mode selector -->
               <div class="form-row">
                 <div class="form-group">
                   <label class="radio-label">
@@ -117,6 +141,8 @@
                   </label>
                 </div>
               </div>
+
+              <!-- Dropdown selectors -->
               <div id="dropdown-formats-container">
                 <div class="form-row">
                   <div class="form-group">
@@ -141,6 +167,8 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Manual input settings -->
               <div
                 id="manual-format-container"
                 class="form-group"
@@ -158,6 +186,8 @@
               </div>
             </div>
           </div>
+
+          <!-- Action buttons: reset, save, transform -->
           <div class="action-bar">
             <button class="btn btn-outline">
               <i class="fas fa-redo"></i> Нулиране
@@ -174,18 +204,20 @@
             </button>
           </div>
         </div>
+
+        <!-- Saved transformation history -->
         <div class="tab-content" id="history-tab">
           <div id="history-container" class="history-panel"></div>
         </div>
-        <!-- === HELP TAB =================================================== -->
+
+        <!-- Help / Settings reference -->
         <div class="tab-content" id="help-tab">
           <article class="help-panel">
             <header class="help-header">
               <i class="fas fa-question-circle"></i>
               <h2>Помощ / Настройки на трансформацията</h2>
             </header>
-
-            <!-- БЪРЗ ПРЕГЛЕД ------------------------------------------------>
+            <!-- Quick overview, options, replacements, example configuration -->
             <section class="help-section">
               <h3><i class="fas fa-info-circle"></i> Как работи</h3>
               <p>
@@ -196,7 +228,6 @@
               </p>
             </section>
 
-            <!-- ОСНОВНИ ОПЦИИ ----------------------------------------------->
             <section class="help-section">
               <h3><i class="fas fa-sliders-h"></i> Основни опции</h3>
 
@@ -226,7 +257,6 @@
               </ul>
             </section>
 
-            <!-- ЗАМЕНИ ------------------------------------------------------->
             <section class="help-section">
               <h3>
                 <i class="fas fa-exchange-alt"></i> Замяна на тагове / стойности
@@ -244,7 +274,6 @@
               </ul>
             </section>
 
-            <!-- ПРИМЕР ------------------------------------------------------->
             <section class="help-section">
               <h3><i class="fas fa-lightbulb"></i> Примерна конфигурация</h3>
               <pre class="help-example"><code>inputformat=yaml
@@ -260,7 +289,8 @@ replace.val.1.0=latest</code></pre>
       </main>
       <footer class="app-footer"></footer>
     </div>
-    <!-- AUTH MODAL -->
+
+    <!-- Modal for login / registration -->
     <div id="auth-modal" class="modal hidden">
       <div class="modal-content">
         <h2 id="auth-title">Вход</h2>
@@ -285,12 +315,15 @@ replace.val.1.0=latest</code></pre>
         <p class="auth-error hidden" id="auth-error"></p>
       </div>
     </div>
+
+    <!-- CSV parsing, core logic, UI handling, and authentication -->
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
     <script src="convert.js"></script>
     <script src="script.js"></script>
     <script src="auth.js"></script>
 
+    <!-- Toast notifications -->
     <div id="toast-container"></div>
   </body>
 </html>
